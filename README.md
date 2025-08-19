@@ -57,7 +57,7 @@ This will:
 1. Show you a list of recent commits
 2. Let you select the "from" commit (older commit)
 3. Let you select the "to" commit (newer commit)
-4. Generate a report with all commits in that range
+4. Generate a report with all commits in that range (including the from and to commits)
 
 ### Command-line Options
 
@@ -130,7 +130,40 @@ You can specify which Ollama model to use with the `--model` flag. The default m
 ### Example Report Output
 
 ```markdown
+Git Commit Report
+================
 
+Repository: D:/code/projects/git-report
+Generated: 2025-08-19 22:10:40 UTC
+Commit Range: f37a91dbd1ddb835fbeb05d24bf344d47ea6a313 -> 02ad657651e2c3325e1085e15be2ef842aef32bb
+Total Commits: 2
+
+Summary
+-------
+From: inital commit (f37a91dbd1ddb835fbeb05d24bf344d47ea6a313)
+To: docs: added cargo installation method (02ad657651e2c3325e1085e15be2ef842aef32bb)
+Date Range: 2025-08-19 22:10:37 to 2025-08-19 22:10:37
+
+Detailed Commits
+================
+
+1. inital commit
+   Hash: f37a91dbd1ddb835fbeb05d24bf344d47ea6a313
+   Author: fresh-milkshake
+   Date: 2025-08-19 22:10:39
+   Files Changed:
+     - Cargo.toml
+     - LICENSE
+     - README.md
+     - assets/header.svg
+     - src/main.rs
+
+2. docs: added cargo installation method
+   Hash: 02ad657651e2c3325e1085e15be2ef842aef32bb
+   Author: fresh-milkshake
+   Date: 2025-08-19 22:10:39
+   Files Changed:
+     - README.md
 ```
 
 ## License
