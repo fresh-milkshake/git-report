@@ -1,6 +1,6 @@
-<img src="assets/header.svg" alt="Git Report Logo" width="30%" height="">
-
 <p align="left">
+  <img src="assets/header.svg" alt="Git Report Logo" width="300" height="auto">
+  <br>
   <img alt="Rust" src="https://img.shields.io/badge/Rust-000000?logo=rust&logoColor=orange&style=flat-square">
   <img alt="Cargo" src="https://img.shields.io/badge/Cargo-000000?logo=cargo&logoColor=orange&style=flat-square">
   <img alt="Git" src="https://img.shields.io/badge/Git-000000?logo=git&logoColor=F05032&style=flat-square">
