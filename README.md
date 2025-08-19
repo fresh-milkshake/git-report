@@ -2,10 +2,10 @@
   <img src="assets/header.svg" alt="Git Report Logo" width="300" height="auto">
   <br>
   <img alt="Rust" src="https://img.shields.io/badge/Rust-000000?logo=rust&logoColor=orange&style=flat-square">
-  <img alt="Cargo" src="https://img.shields.io/badge/Cargo-000000?logo=cargo&logoColor=orange&style=flat-square">
+  <img alt="Ollama" src="https://img.shields.io/badge/Ollama-000000?logo=ollama&logoColor=white&style=flat-square">
   <img alt="Git" src="https://img.shields.io/badge/Git-000000?logo=git&logoColor=F05032&style=flat-square">
-  <img alt="GitHub" src="https://img.shields.io/badge/GitHub-000000?logo=github&logoColor=white&style=flat-square">
-  <img alt="License: MIT" src="https://img.shields.io/badge/MIT_License-black?style=flat-square">
+  <img alt="tokio" src="https://img.shields.io/badge/tokio-000000?logo=tokio&logoColor=white&style=flat-square">
+  <img alt="License: MIT" src="https://img.shields.io/badge/MIT-black?logo=open-source-initiative&logoColor=white&style=flat-square">
 </p>
 
 A command-line tool that generates detailed commit reports from git repositories. It allows you to select a range of commits and creates a comprehensive text report with all commit details.
