@@ -1,0 +1,22 @@
+[package]
+name = "git-report"
+version = "1.0.0"
+edition = "2021"
+authors = ["fresh-milkshake"]
+description = "A CLI tool to generate detailed commit reports from git repositories."
+license = "MIT"
+repository = "https://github.com/fresh-milkshake/git-report"
+keywords = ["cli", "tool", "git", "report", "ai"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+clap = { version = "4.4", features = ["derive"] }
+anyhow = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+colored = "2.0"
+dialoguer = "0.11"
+console = "0.15"
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1.0", features = ["full"] }
