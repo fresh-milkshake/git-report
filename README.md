@@ -27,6 +27,12 @@ A command-line tool that generates detailed commit reports from git repositories
 - Ollama (for AI-enhanced reports) - [install Ollama](https://ollama.ai/)
   - After installation, pull the model (gemma3 is the default model): `ollama pull gemma3`
 
+### Install from cargo
+
+```bash
+cargo install git-report
+```
+
 ### Build from Source
 
 ```bash
