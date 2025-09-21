@@ -5,28 +5,37 @@ use colored::*;
 use console::Term;
 use dialoguer::Select;
 use serde_json::{json, Value};
-use std::{
-    fs::File,
-    io::Write,
-    process::Command,
-};
+use std::{fs::File, io::Write, process::Command};
 
 #[derive(Parser, Debug)]
 #[command(name = "git-report")]
 #[command(about = "Generate detailed commit reports from git repository")]
 #[command(version)]
 struct Args {
-    #[arg(short, long, help = "Output file path (default: git-report-{timestamp}.txt)")]
+    #[arg(
+        short,
+        long,
+        help = "Output file path (default: git-report-{timestamp}.txt)"
+    )]
     output: Option<String>,
     #[arg(short, long, help = "From commit hash or reference")]
     from: Option<String>,
     #[arg(short, long, help = "To commit hash or reference")]
     to: Option<String>,
-    #[arg(short, long, default_value = "50", help = "Number of commits to show in selection")]
+    #[arg(
+        short,
+        long,
+        default_value = "50",
+        help = "Number of commits to show in selection"
+    )]
     limit: usize,
     #[arg(long, help = "Generate AI-enhanced report using local Ollama")]
     ai: bool,
-    #[arg(long, default_value = "gemma3", help = "Ollama model to use for AI generation")]
+    #[arg(
+        long,
+        default_value = "gemma3",
+        help = "Ollama model to use for AI generation"
+    )]
     model: String,
 }
 
@@ -50,9 +59,7 @@ fn check_git_repository() -> Result<String> {
         anyhow::bail!("Not in a git repository");
     }
 
-    let repo_path = String::from_utf8(output.stdout)?
-        .trim()
-        .to_string();
+    let repo_path = String::from_utf8(output.stdout)?.trim().to_string();
 
     Ok(repo_path)
 }
@@ -140,7 +147,15 @@ fn select_commit<'a>(commits: &'a [Commit], prompt: &str) -> Result<&'a Commit> 
     let options: Vec<String> = commits
         .iter()
         .enumerate()
-        .map(|(i, c)| format!("{}. {} - {} ({})", i + 1, c.hash[..8].to_string(), c.subject, c.date.format("%Y-%m-%d")))
+        .map(|(i, c)| {
+            format!(
+                "{}. {} - {} ({})",
+                i + 1,
+                c.hash[..8].to_string(),
+                c.subject,
+                c.date.format("%Y-%m-%d")
+            )
+        })
         .collect();
 
     let selection = Select::new()
@@ -282,23 +297,39 @@ fn get_commits_in_range(from_hash: &str, to_hash: &str) -> Result<Vec<Commit>> {
     Ok(commits)
 }
 
-fn generate_report(repo_path: &str, from_commit: &Commit, to_commit: &Commit, commits: &[Commit]) -> String {
+fn generate_report(
+    repo_path: &str,
+    from_commit: &Commit,
+    to_commit: &Commit,
+    commits: &[Commit],
+) -> String {
     let mut report = String::new();
 
     report.push_str(&format!("Git Commit Report\n"));
     report.push_str(&format!("================\n\n"));
     report.push_str(&format!("Repository: {}\n", repo_path));
-    report.push_str(&format!("Generated: {}\n", Utc::now().format("%Y-%m-%d %H:%M:%S UTC")));
-    report.push_str(&format!("Commit Range: {} -> {}\n", from_commit.hash, to_commit.hash));
+    report.push_str(&format!(
+        "Generated: {}\n",
+        Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
+    ));
+    report.push_str(&format!(
+        "Commit Range: {} -> {}\n",
+        from_commit.hash, to_commit.hash
+    ));
     report.push_str(&format!("Total Commits: {}\n\n", commits.len()));
 
     report.push_str(&format!("Summary\n"));
     report.push_str(&format!("-------\n"));
-    report.push_str(&format!("From: {} ({})\n", from_commit.subject, from_commit.hash));
+    report.push_str(&format!(
+        "From: {} ({})\n",
+        from_commit.subject, from_commit.hash
+    ));
     report.push_str(&format!("To: {} ({})\n", to_commit.subject, to_commit.hash));
-    report.push_str(&format!("Date Range: {} to {}\n\n", 
+    report.push_str(&format!(
+        "Date Range: {} to {}\n\n",
         from_commit.date.format("%Y-%m-%d %H:%M:%S"),
-        to_commit.date.format("%Y-%m-%d %H:%M:%S")));
+        to_commit.date.format("%Y-%m-%d %H:%M:%S")
+    ));
 
     report.push_str(&format!("Detailed Commits\n"));
     report.push_str(&format!("================\n\n"));
@@ -307,7 +338,10 @@ fn generate_report(repo_path: &str, from_commit: &Commit, to_commit: &Commit, co
         report.push_str(&format!("{}. {}\n", i + 1, commit.subject));
         report.push_str(&format!("   Hash: {}\n", commit.hash));
         report.push_str(&format!("   Author: {}\n", commit.author));
-        report.push_str(&format!("   Date: {}\n", commit.date.format("%Y-%m-%d %H:%M:%S")));
+        report.push_str(&format!(
+            "   Date: {}\n",
+            commit.date.format("%Y-%m-%d %H:%M:%S")
+        ));
 
         if !commit.body.trim().is_empty() {
             report.push_str(&format!("   Description:\n"));
@@ -329,14 +363,75 @@ fn generate_report(repo_path: &str, from_commit: &Commit, to_commit: &Commit, co
     report
 }
 
-async fn generate_ai_report(repo_path: &str, from_commit: &Commit, to_commit: &Commit, commits: &[Commit], model: &str) -> Result<String> {
+async fn check_ollama_server(model: &str) -> Result<()> {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .context("Failed to create HTTP client")?;
 
+    // First check if Ollama server is running
+    let health_response = client.get("http://localhost:11434/api/tags").send().await;
+
+    match health_response {
+        Ok(response) if response.status().is_success() => {
+            // Check if the requested model is available
+            let models_response = response
+                .json::<Value>()
+                .await
+                .context("Failed to parse Ollama models response")?;
+
+            let models = models_response["models"]
+                .as_array()
+                .ok_or_else(|| anyhow::anyhow!("Invalid models response format"))?;
+
+            let model_available = models.iter().any(|m| {
+                m["name"].as_str().map_or(false, |name| {
+                    name == model || name.starts_with(&format!("{}:", model))
+                })
+            });
+
+            if !model_available {
+                anyhow::bail!(
+                    "Model '{}' is not available. Available models: {}",
+                    model,
+                    models
+                        .iter()
+                        .filter_map(|m| m["name"].as_str())
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                );
+            }
+
+            Ok(())
+        }
+        Ok(response) => {
+            anyhow::bail!("Ollama server returned error status: {}", response.status());
+        }
+        Err(e) if e.is_timeout() => {
+            anyhow::bail!("Ollama server is not responding. Please make sure Ollama is running on localhost:11434");
+        }
+        Err(e) => {
+            anyhow::bail!("Failed to connect to Ollama server: {}. Please make sure Ollama is running on localhost:11434", e);
+        }
+    }
+}
+
+async fn generate_ai_report(
+    repo_path: &str,
+    from_commit: &Commit,
+    to_commit: &Commit,
+    commits: &[Commit],
+    model: &str,
+) -> Result<String> {
     let mut commit_details = String::new();
     for (i, commit) in commits.iter().enumerate() {
         commit_details.push_str(&format!("Commit {}:\n", i + 1));
         commit_details.push_str(&format!("  Hash: {}\n", commit.hash));
         commit_details.push_str(&format!("  Author: {}\n", commit.author));
-        commit_details.push_str(&format!("  Date: {}\n", commit.date.format("%Y-%m-%d %H:%M:%S")));
+        commit_details.push_str(&format!(
+            "  Date: {}\n",
+            commit.date.format("%Y-%m-%d %H:%M:%S")
+        ));
         commit_details.push_str(&format!("  Subject: {}\n", commit.subject));
         if !commit.body.trim().is_empty() {
             commit_details.push_str(&format!("  Description: {}\n", commit.body.trim()));
@@ -351,25 +446,24 @@ async fn generate_ai_report(repo_path: &str, from_commit: &Commit, to_commit: &C
     }
 
     let prompt = format!(
-        "Generate a complete, professional Git commit report based on the following commit data. \
-        Create a well-structured report with these sections:\n\
-        1. Title and Repository Information\n\
-        2. Executive Summary\n\
-        3. Detailed Commit Analysis\n\
-        4. Technical Impact Assessment\n\
-        5. Conclusion\n\n\
-        Guidelines:\n\
-        - Use clear, professional language\n\
-        - Avoid repetition and unnecessary sections\n\
-        - Focus on what was actually accomplished\n\
-        - Explain technical changes in business terms when possible\n\
-        - Keep the report concise but comprehensive\n\
-        - Use proper markdown formatting\n\n\
-        Repository: {}\n\
-        Commit Range: {} -> {}\n\
-        Total Commits: {}\n\
-        Generated: {}\n\n\
-        Commit Data:\n{}",
+        "You are an assistant who writes concise and clear commit summaries for sharing directly in Telegram personal messages.\n\
+        Please create a short, informative update for a colleague who needs to know what changed in the repository.\n\
+        Format:\n\
+        1. Start with a brief summary of what changed overall (1-2 sentences).\n\
+        2. Then, list the key changes as bullet points (plain text, each on a new line, no markdown, no extra details).\n\
+        3. If there are important technical details, explain them in simple terms.\n\
+        4. Do not use markdown, do not add headings, do not mention 'report' or 'repository' — just the essential changes.\n\
+        5. Avoid repeating phrases or adding unnecessary formalities.\n\
+        6. Write so the text can be copied and sent directly in Telegram.\n\
+        \n\
+        Data for the summary:\n\
+        Path: {}\n\
+        Commit range: {} -> {}\n\
+        Number of commits: {}\n\
+        Generated at: {}\n\
+        \n\
+        Commits:\n\
+        {}",
         repo_path,
         from_commit.hash,
         to_commit.hash,
@@ -402,15 +496,21 @@ async fn generate_ai_report(repo_path: &str, from_commit: &Commit, to_commit: &C
         .context(format!("Failed to connect to Ollama with model '{}'. Make sure Ollama is running on localhost:11434", model))?;
 
     if !response.status().is_success() {
-        anyhow::bail!("Ollama API request failed with status: {} for model '{}'", response.status(), model);
+        anyhow::bail!(
+            "Ollama API request failed with status: {} for model '{}'",
+            response.status(),
+            model
+        );
     }
 
-    let response_json: Value = response.json().await
+    let response_json: Value = response
+        .json()
+        .await
         .context("Failed to parse Ollama response")?;
 
-    let ai_report = response_json["response"]
-        .as_str()
-        .ok_or_else(|| anyhow::anyhow!("Invalid response format from Ollama for model '{}'", model))?;
+    let ai_report = response_json["response"].as_str().ok_or_else(|| {
+        anyhow::anyhow!("Invalid response format from Ollama for model '{}'", model)
+    })?;
 
     Ok(ai_report.to_string())
 }
@@ -428,14 +528,18 @@ async fn main() -> Result<()> {
     println!("Found {} commits", commits.len());
 
     let from_commit = if let Some(from) = args.from {
-        commits.iter().find(|c| c.hash.starts_with(&from))
+        commits
+            .iter()
+            .find(|c| c.hash.starts_with(&from))
             .ok_or_else(|| anyhow::anyhow!("Commit '{}' not found", from))?
     } else {
         select_commit(&commits, "Select FROM commit (older commit)")?
     };
 
     let to_commit = if let Some(to) = args.to {
-        commits.iter().find(|c| c.hash.starts_with(&to))
+        commits
+            .iter()
+            .find(|c| c.hash.starts_with(&to))
             .ok_or_else(|| anyhow::anyhow!("Commit '{}' not found", to))?
     } else {
         select_commit(&commits, "Select TO commit (newer commit)")?
@@ -447,8 +551,27 @@ async fn main() -> Result<()> {
     println!("Found {} commits in range", range_commits.len());
 
     let report_content = if args.ai {
-        println!("{}", format!("Generating AI-enhanced report using Ollama with model '{}'...", args.model).blue());
-        generate_ai_report(&repo_path, from_commit, to_commit, &range_commits, &args.model).await?
+        println!(
+            "{}",
+            format!("Checking Ollama server and model '{}'...", args.model).blue()
+        );
+        check_ollama_server(&args.model).await?;
+        println!(
+            "{}",
+            format!(
+                "Generating AI-enhanced report using Ollama with model '{}'...",
+                args.model
+            )
+            .blue()
+        );
+        generate_ai_report(
+            &repo_path,
+            from_commit,
+            to_commit,
+            &range_commits,
+            &args.model,
+        )
+        .await?
     } else {
         generate_report(&repo_path, from_commit, to_commit, &range_commits)
     };
