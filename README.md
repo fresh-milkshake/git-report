@@ -26,6 +26,8 @@ A command-line tool that generates detailed commit reports from git repositories
 - Git executable in your PATH
 - Ollama (for AI-enhanced reports) - [install Ollama](https://ollama.ai/)
   - After installation, pull the model (gemma3 is the default model): `ollama pull gemma3`
+  - For faster generation, use smaller models: `ollama pull gemma3:270m` (291MB)
+  - For better quality, use larger models (default): `ollama pull gemma3:4b` (3.3GB)
 
 ### Install from cargo
 
@@ -97,7 +99,7 @@ git-report --ai --output my-ai-report.txt
 git-report --ai --model llama3.2:3b
 
 # Generate AI-enhanced report with custom model and output
-git-report --ai --model llama3.2 --output my-report.txt
+git-report --ai --model qwen3 --output my-report.txt
 ```
 
 
@@ -129,41 +131,8 @@ You can specify which Ollama model to use with the `--model` flag. The default m
 
 ### Example Report Output
 
-```markdown
-Git Commit Report
-================
-
-Repository: D:/code/projects/git-report
-Generated: 2025-08-19 22:10:40 UTC
-Commit Range: f37a91dbd1ddb835fbeb05d24bf344d47ea6a313 -> 02ad657651e2c3325e1085e15be2ef842aef32bb
-Total Commits: 2
-
-Summary
--------
-From: inital commit (f37a91dbd1ddb835fbeb05d24bf344d47ea6a313)
-To: docs: added cargo installation method (02ad657651e2c3325e1085e15be2ef842aef32bb)
-Date Range: 2025-08-19 22:10:37 to 2025-08-19 22:10:37
-
-Detailed Commits
-================
-
-1. inital commit
-   Hash: f37a91dbd1ddb835fbeb05d24bf344d47ea6a313
-   Author: fresh-milkshake
-   Date: 2025-08-19 22:10:39
-   Files Changed:
-     - Cargo.toml
-     - LICENSE
-     - README.md
-     - assets/header.svg
-     - src/main.rs
-
-2. docs: added cargo installation method
-   Hash: 02ad657651e2c3325e1085e15be2ef842aef32bb
-   Author: fresh-milkshake
-   Date: 2025-08-19 22:10:39
-   Files Changed:
-     - README.md
+```
+This commit range includes updates to the project’s report generation and documentation. We’ve added checks to ensure the ‘from’ and ‘to’ commit ranges are correctly included in the generated reports, and enhanced the installation instructions in the README.  Key changes include: a new function to check the Ollama server, improved LLM prompt formatting, inclusion of from and to commit details in the reports, and updated installation instructions for Cargo.
 ```
 
 ## License

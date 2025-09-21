@@ -1,6 +1,6 @@
 [package]
 name = "git-report"
-version = "1.0.2"
+version = "1.1.0"
 edition = "2021"
 authors = ["fresh-milkshake"]
 description = "A CLI tool to generate detailed commit reports from git repositories."
