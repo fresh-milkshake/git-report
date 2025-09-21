@@ -365,16 +365,14 @@ fn generate_report(
 
 async fn check_ollama_server(model: &str) -> Result<()> {
     let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(10))
+        .timeout(std::time::Duration::from_secs(60 * 2))
         .build()
         .context("Failed to create HTTP client")?;
 
-    // First check if Ollama server is running
     let health_response = client.get("http://localhost:11434/api/tags").send().await;
 
     match health_response {
         Ok(response) if response.status().is_success() => {
-            // Check if the requested model is available
             let models_response = response
                 .json::<Value>()
                 .await
@@ -447,14 +445,15 @@ async fn generate_ai_report(
 
     let prompt = format!(
         "You are an assistant who writes concise and clear commit summaries for sharing directly in Telegram personal messages.\n\
-        Please create a short, informative update for a colleague who needs to know what changed in the repository.\n\
+        Please create a informative update for a colleague who needs to know what changed in the repository.\n\
         Format:\n\
         1. Start with a brief summary of what changed overall (1-2 sentences).\n\
-        2. Then, list the key changes as bullet points (plain text, each on a new line, no markdown, no extra details).\n\
-        3. If there are important technical details, explain them in simple terms.\n\
+        2. Then, list the key changes as bullet points (plain text, each on a new line, no markdown).\n\
+        3. If there are important difficult technical details, explain them in simple terms.\n\
         4. Do not use markdown, do not add headings, do not mention 'report' or 'repository' — just the essential changes.\n\
         5. Avoid repeating phrases or adding unnecessary formalities.\n\
-        6. Write so the text can be copied and sent directly in Telegram.\n\
+        6. Write so the text can be copied and sent directly in TELEGRAM.\n\
+        7. Make sure you do not lose ANY of the information or changes. You MUST tell about ALL changes.\n\
         \n\
         Data for the summary:\n\
         Path: {}\n\
